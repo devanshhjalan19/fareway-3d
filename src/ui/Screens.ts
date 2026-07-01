@@ -14,6 +14,7 @@ export class Screens {
     onGarage: () => void,
     onCreateRoom: () => void,
     onJoinRoom: () => void,
+    mpAvailable = true,
   ) {
     // --- Title ---
     this.title.className = "screen";
@@ -26,7 +27,7 @@ export class Screens {
          <b>A·D / ←·→</b> steer &nbsp; <b>Space</b> handbrake &nbsp; <b>P</b> pause</p>
     `;
     const startBtn = document.createElement("button");
-    startBtn.textContent = "▶ SINGLE PLAYER";
+    startBtn.textContent = mpAvailable ? "▶ SINGLE PLAYER" : "▶ START DRIVING";
     startBtn.onclick = onStart;
 
     // Multiplayer entry points.
@@ -44,7 +45,10 @@ export class Screens {
     garageBtn.className = "ghost";
     garageBtn.textContent = "🔧 GARAGE";
     garageBtn.onclick = onGarage;
-    this.title.append(startBtn, mpRow, garageBtn);
+    // Only surface the Create/Join buttons when a multiplayer server is
+    // configured (VITE_PARTYKIT_HOST). Otherwise keep the menu clean.
+    if (mpAvailable) this.title.append(startBtn, mpRow, garageBtn);
+    else this.title.append(startBtn, garageBtn);
 
     // --- Game over ---
     this.over.className = "screen hidden";

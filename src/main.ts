@@ -147,11 +147,14 @@ const pause = new PauseMenu(profile, {
   onWeather: setWeatherMode,
 });
 
+// Multiplayer entry points only appear when a PartyKit server is configured.
+const mpAvailable = !!import.meta.env.VITE_PARTYKIT_HOST;
 const screens = new Screens(
   beginRun,
   () => openGarage(() => screens.showTitle()),
   createRoom,
   joinRoom,
+  mpAvailable,
 );
 
 function setHudVisible(v: boolean) {
