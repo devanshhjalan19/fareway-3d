@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🛺</text></svg>" />
+    <title>Rickshaw Racing</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #87b5d6; }
+      #app { position: fixed; inset: 0; }
+      canvas { display: block; }
+
+      #loading {
+        position: fixed; inset: 0; z-index: 100;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        background: #1a1a2e; color: #ffd23f;
+        font-family: system-ui, sans-serif; gap: 16px;
+        transition: opacity 0.4s ease;
+      }
+      #loading h1 { font-size: 2.5rem; letter-spacing: 2px; }
+      #loading .bar { width: 240px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+      #loading .bar > i { display: block; height: 100%; width: 0%; background: #ffd23f; transition: width 0.2s; }
+      #loading.hidden { opacity: 0; pointer-events: none; }
+
+      /* --- HUD --- */
+      #hud {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+        display: flex; gap: 12px; justify-content: center;
+        padding: 12px; pointer-events: none;
+        font-family: system-ui, sans-serif;
+      }
+      .hud-chip {
+        background: rgba(20, 20, 35, 0.78); color: #fff;
+        padding: 8px 16px; border-radius: 999px;
+        font-size: 1.1rem; font-weight: 700;
+        display: flex; align-items: center; gap: 8px;
+        backdrop-filter: blur(4px);
+      }
+      .hud-chip.timer.low { color: #ff5d5d; animation: pulse 0.6s infinite alternate; }
+      .hud-chip.combo { background: rgba(255, 107, 31, 0.9); color: #1a1a2e; }
+      .hud-chip.speed { background: rgba(20, 20, 35, 0.6); min-width: 84px; justify-content: center; }
+      @keyframes pulse { to { transform: scale(1.08); } }
+
+      #objective {
+        position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+        z-index: 20; pointer-events: none;
+        background: rgba(255, 210, 63, 0.92); color: #1a1a2e;
+        padding: 8px 22px; border-radius: 999px;
+        font-family: system-ui, sans-serif; font-weight: 700; font-size: 1rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      }
+
+      #minimap {
+        position: fixed; bottom: 16px; right: 16px; z-index: 20;
+        border: 3px solid rgba(255,255,255,0.6); border-radius: 8px;
+        background: rgba(20,20,35,0.6);
+      }
+
+      /* --- Screens --- */
+      .screen {
+        position: fixed; inset: 0; z-index: 50;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 20px;
+        background: rgba(15, 15, 30, 0.92); color: #fff;
+        font-family: system-ui, sans-serif; text-align: center;
+      }
+      .screen.hidden { display: none; }
+      .screen h1 { font-size: 3rem; color: #ffd23f; letter-spacing: 2px; }
+      .screen h2 { font-size: 2rem; color: #ffd23f; }
+      .screen p { font-size: 1.1rem; max-width: 480px; line-height: 1.6; opacity: 0.9; }
+      .screen .stat { font-size: 1.4rem; }
+      .screen button {
+        margin-top: 8px; padding: 14px 40px; font-size: 1.2rem; font-weight: 700;
+        background: #ffd23f; color: #1a1a2e; border: none; border-radius: 999px;
+        cursor: pointer; transition: transform 0.1s;
+      }
+      .screen button:hover { transform: scale(1.05); }
+      .screen button.ghost {
+        background: transparent; color: #ffd23f;
+        border: 2px solid #ffd23f; padding: 12px 32px; font-size: 1rem;
+      }
+      .controls { font-size: 0.95rem; opacity: 0.75; }
+      .screen .bank { font-size: 0.95rem; color: #8de08d; }
+
+      /* --- Multiplayer --- */
+      .mp-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+      .mp-row button { margin-top: 0; padding: 12px 28px; font-size: 1.05rem;
+        background: #2f8fd8; color: #fff; }
+      .mp-error { color: #ff8a8a; font-weight: 700; min-height: 1.2em; }
+      .code-input {
+        font-size: 2.4rem; font-weight: 800; letter-spacing: 10px; text-align: center;
+        width: 260px; padding: 10px 0; border-radius: 12px; border: 2px solid #ffd23f;
+        background: rgba(255,255,255,0.08); color: #ffd23f; text-transform: uppercase;
+        font-family: system-ui, sans-serif;
+      }
+      .room-code {
+        font-size: 3.4rem; font-weight: 900; letter-spacing: 14px; color: #ffd23f;
+        background: rgba(255,255,255,0.06); border: 2px dashed rgba(255,210,63,0.6);
+        border-radius: 14px; padding: 10px 24px 10px 38px;
+      }
+      .player-list { display: flex; flex-direction: column; gap: 8px; min-width: 260px; }
+      .player-row {
+        display: flex; align-items: center; gap: 12px; font-size: 1.2rem; font-weight: 700;
+        background: rgba(255,255,255,0.06); border-radius: 999px; padding: 8px 20px;
+      }
+      .player-dot { width: 16px; height: 16px; border-radius: 50%; flex: none; }
+      .player-count { opacity: 0.7; font-size: 0.95rem; margin-top: 4px; }
+      .wait-msg { color: #9fe7ff; font-weight: 700; }
+      .score-list { display: flex; flex-direction: column; gap: 10px; min-width: 320px; }
+      .score-row {
+        display: flex; align-items: center; gap: 14px; font-size: 1.3rem; font-weight: 700;
+        background: rgba(255,255,255,0.06); border-radius: 12px; padding: 10px 20px;
+      }
+      .score-row.you { border: 2px solid #ffd23f; }
+      .score-name { flex: 1; text-align: left; }
+      .score-val { color: #8de08d; font-weight: 800; }
+
+      /* --- Combo edge glow --- */
+      #combo-glow {
+        position: fixed; inset: 0; z-index: 15; pointer-events: none; opacity: 0;
+        transition: opacity 0.25s ease;
+        box-shadow: inset 0 0 160px 40px rgba(255, 120, 20, 0.9);
+      }
+
+      /* --- Toasts --- */
+      #toast-layer {
+        position: fixed; inset: 0; z-index: 30; pointer-events: none;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 8px;
+        font-family: system-ui, sans-serif;
+      }
+      .toast {
+        text-align: center; color: #fff;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        animation: toastFloat 1.5s ease-out forwards;
+      }
+      .toast.reward .t-amount { font-size: 2.4rem; font-weight: 800; color: #ffe04a; }
+      .toast.reward .t-stars { font-size: 1.6rem; letter-spacing: 2px; }
+      .toast.reward .t-stars.great { color: #ffd23f; }
+      .toast.reward .t-stars.ok { color: #cfd8e3; }
+      .toast.reward .t-stars.rough { color: #ff7a7a; }
+      .toast.reward .t-reaction { font-size: 1.1rem; font-weight: 700; }
+      .toast.reward .t-combo { font-size: 1.1rem; font-weight: 800; color: #ff8a3c; }
+      .toast.note {
+        font-size: 1.1rem; font-weight: 700; color: #9fe7ff;
+        background: rgba(20,20,35,0.55); padding: 6px 16px; border-radius: 999px;
+      }
+      @keyframes toastFloat {
+        0% { transform: translateY(20px) scale(0.8); opacity: 0; }
+        15% { transform: translateY(0) scale(1.05); opacity: 1; }
+        70% { opacity: 1; }
+        100% { transform: translateY(-50px) scale(1); opacity: 0; }
+      }
+
+      /* --- Garage --- */
+      .garage-wallet { font-size: 1.3rem; }
+      .garage-grid { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+      .garage-card {
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 14px; padding: 16px 18px; width: 180px;
+        display: flex; flex-direction: column; gap: 8px; align-items: center;
+      }
+      .garage-card .g-name { font-weight: 800; font-size: 1.15rem; color: #ffd23f; }
+      .garage-card .g-blurb { font-size: 0.85rem; opacity: 0.8; min-height: 2.4em; }
+      .garage-card .g-pips { letter-spacing: 3px; color: #ffd23f; }
+      .garage-card button {
+        margin-top: 4px; padding: 8px 16px; font-size: 0.9rem; font-weight: 700;
+        background: #ffd23f; color: #1a1a2e; border: none; border-radius: 999px; cursor: pointer;
+      }
+      .garage-card button:disabled { background: #555; color: #999; cursor: not-allowed; }
+      .garage-card .maxed { font-weight: 800; color: #8de08d; }
+      .garage-subtitle { font-size: 1.1rem; font-weight: 700; opacity: 0.85; }
+      .garage-liveries { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+      .livery-chip {
+        width: 48px; height: 48px; border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.5); cursor: pointer;
+        font-weight: 800; color: #1a1a2e; font-size: 1.1rem;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .livery-chip.selected { border-color: #fff; box-shadow: 0 0 10px #fff; }
+      .livery-chip .lock { font-size: 0.7rem; color: #fff; text-shadow: 0 1px 2px #000; }
+      .garage-back { margin-top: 8px; }
+
+      /* --- Pause menu --- */
+      .pause button {
+        min-width: 220px; padding: 12px 28px; font-size: 1.05rem;
+        background: rgba(255,255,255,0.1); color: #fff;
+        border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; cursor: pointer;
+      }
+      .pause button.pause-primary { background: #ffd23f; color: #1a1a2e; font-weight: 800; }
+      .pause .pause-sublabel { margin-top: 8px; opacity: 0.7; }
+      .pause-weather { display: flex; gap: 10px; }
+      .pause .pause-wbtn { min-width: 0; padding: 10px 16px; }
+      .pause .pause-wbtn.active { background: #ffd23f; color: #1a1a2e; font-weight: 800; }
+
+      /* --- Touch controls --- */
+      #touch-controls {
+        position: fixed; inset: 0; z-index: 18; pointer-events: none;
+        display: none; justify-content: space-between; align-items: flex-end;
+        padding: 24px;
+      }
+      #touch-controls.active { display: flex; }
+      .touch-cluster { display: flex; gap: 14px; align-items: flex-end; }
+      .touch-cluster.right { align-items: flex-end; }
+      .touch-btn {
+        pointer-events: auto; width: 74px; height: 74px; border-radius: 50%;
+        font-size: 1.8rem; border: none; color: #1a1a2e;
+        background: rgba(255, 210, 63, 0.85); touch-action: none;
+        display: flex; align-items: center; justify-content: center;
+        user-select: none; -webkit-user-select: none;
+      }
+      .touch-btn.small { width: 64px; height: 64px; font-size: 1.4rem; background: rgba(255,255,255,0.7); }
+      .touch-btn.go { width: 88px; height: 88px; background: rgba(120, 220, 120, 0.9); }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="loading">
+      <h1>🛺 RICKSHAW RACING</h1>
+      <div class="bar"><i id="loading-bar"></i></div>
+      <p id="loading-text">Loading…</p>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

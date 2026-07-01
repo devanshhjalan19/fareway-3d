@@ -1,0 +1,21 @@
+# Netlify hosts the game's static frontend (the Three.js client).
+# The multiplayer room server runs separately on PartyKit — see README.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # The client reads VITE_PARTYKIT_HOST at build time to know where the
+  # multiplayer server lives. Set this in the Netlify dashboard
+  # (Site settings → Environment variables) to your deployed PartyKit host,
+  # e.g.  rickshaw-racing.YOUR-USERNAME.partykit.dev
+  # If it is left unset, single-player still works but multiplayer will try to
+  # reach a local dev server and fail.
+  NODE_VERSION = "20"
+
+# Single-page app: always serve index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
