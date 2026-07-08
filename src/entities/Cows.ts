@@ -141,7 +141,6 @@ export class Cows {
 
     const head = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 0.55), hide);
     head.position.set(0, 1.15, 1.05);
-    head.castShadow = true;
     g.add(head);
 
     // Horns.
@@ -159,7 +158,6 @@ export class Cows {
       for (const sx of [-1, 1]) {
         const leg = new THREE.Mesh(legGeo, hide);
         leg.position.set(sx * 0.3, 0.7, sz * 0.6);
-        leg.castShadow = true;
         g.add(leg);
         legs.push(leg);
       }

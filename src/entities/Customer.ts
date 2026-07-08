@@ -37,12 +37,13 @@ export class Customer {
   private buildModel() {
     const shirt = SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)];
 
+    // No castShadow: there can be a dozen of these on screen, and the glowing
+    // beacon above each one already draws the eye more than a ground shadow would.
     const body = new THREE.Mesh(
       new THREE.CapsuleGeometry(0.3, 0.7, 4, 8),
       new THREE.MeshStandardMaterial({ color: shirt, roughness: 0.8 }),
     );
     body.position.y = 0.85;
-    body.castShadow = true;
     this.object.add(body);
 
     const head = new THREE.Mesh(
@@ -50,7 +51,6 @@ export class Customer {
       new THREE.MeshStandardMaterial({ color: 0xc68642, roughness: 0.7 }),
     );
     head.position.y = 1.55;
-    head.castShadow = true;
     this.object.add(head);
   }
 

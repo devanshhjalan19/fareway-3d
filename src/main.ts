@@ -44,10 +44,11 @@ const surfaces = new Surfaces(city.roadLines, city.span);
 scene.add(surfaces.group);
 
 // Cows wander the streets and collide dynamically (see cows.update / cows.collide).
-const cows = new Cows(city.roadLines, city.span);
+// Counts trimmed slightly from the original 8/16 for performance headroom.
+const cows = new Cows(city.roadLines, city.span, 6);
 scene.add(cows.group);
 
-const traffic = new Traffic(city.roadLines, city.span, 16);
+const traffic = new Traffic(city.roadLines, city.span, 12);
 scene.add(traffic.group);
 
 const clouds = new Clouds(city.span);

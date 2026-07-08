@@ -15,11 +15,14 @@ export class SceneManager {
   readonly postfx: PostFX;
 
   constructor(container: HTMLElement) {
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // SMAA (in PostFX) handles anti-aliasing now, so the renderer doesn't need
+    // its own MSAA. Pixel ratio is capped below 2x since that renders 4x the
+    // pixels on high-DPI displays for a sharpness gain most people won't notice.
+    this.renderer = new THREE.WebGLRenderer({ antialias: false });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     // Filmic tone mapping + slight over-exposure for a richer, brighter look.
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.5;
@@ -51,7 +54,7 @@ export class SceneManager {
     const sun = this.sun;
     sun.position.set(40, 60, 25);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.mapSize.set(1024, 1024);
     // Tight frustum (the light follows the player) keeps shadows crisp on the
     // bigger map instead of being stretched across the whole city.
     const d = 55;

@@ -229,7 +229,7 @@ export class City {
             new THREE.MeshStandardMaterial({ color: 0x3a6ea5 }),
           );
           tank.position.set(bx + (this.rand() - 0.5) * w * 0.5, h + 0.6, bz + (this.rand() - 0.5) * d * 0.5);
-          tank.castShadow = true;
+          // No castShadow: tiny rooftop detail, not worth the shadow-pass cost.
           this.group.add(tank);
         }
 
@@ -329,6 +329,9 @@ export class City {
     }
   }
 
+  // Decorative props (palms, stalls, lamps) skip castShadow — there are many
+  // of them scattered around the map, and their shadows are small enough not
+  // to be missed, so it's a cheap win to exclude them from the shadow pass.
   private buildPalm(x: number, z: number): THREE.Group {
     const g = new THREE.Group();
     const trunk = new THREE.Mesh(
@@ -336,7 +339,6 @@ export class City {
       new THREE.MeshStandardMaterial({ color: 0x8a6a43 }),
     );
     trunk.position.y = 1.3;
-    trunk.castShadow = true;
     g.add(trunk);
 
     const frondMat = new THREE.MeshStandardMaterial({ color: 0x3f8f3a });
@@ -346,7 +348,6 @@ export class City {
       frond.position.set(Math.cos(a) * 0.5, 2.7, Math.sin(a) * 0.5);
       frond.rotation.z = Math.cos(a) * 0.9;
       frond.rotation.x = -Math.sin(a) * 0.9;
-      frond.castShadow = true;
       g.add(frond);
     }
     g.position.set(x, 0.2, z);
@@ -360,7 +361,6 @@ export class City {
       new THREE.MeshStandardMaterial({ color: 0x8d6e4f }),
     );
     counter.position.y = 0.6;
-    counter.castShadow = true;
     g.add(counter);
 
     const tarpColor = [0xd64545, 0x4577d6, 0x46b06a, 0xe0a93f][Math.floor(this.rand() * 4)];
@@ -369,7 +369,6 @@ export class City {
       new THREE.MeshStandardMaterial({ color: tarpColor }),
     );
     tarp.position.y = 1.7;
-    tarp.castShadow = true;
     g.add(tarp);
 
     const poleGeo = new THREE.BoxGeometry(0.08, 1.1, 0.08);
@@ -390,7 +389,6 @@ export class City {
     const metal = new THREE.MeshStandardMaterial({ color: 0x2e2e34, roughness: 0.6 });
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 3.4, 8), metal);
     post.position.y = 1.7;
-    post.castShadow = true;
     g.add(post);
     const arm = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.1, 0.1), metal);
     arm.position.set(0.3, 3.35, 0);

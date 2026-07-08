@@ -76,6 +76,11 @@ export class PostFX {
       0.85, // luminance threshold
     );
     this.composer.addPass(this.bloom);
+    // Bloom is a soft blur, so it doesn't need to be computed at full
+    // resolution — halving its internal working size again (on top of the
+    // half-res "bright" pass Three.js already does) is a big perf win for a
+    // barely-visible softness change.
+    this.shrinkBloom(size.x, size.y);
 
     // Tone-map + convert to sRGB (uses renderer.toneMapping / exposure).
     this.composer.addPass(new OutputPass());
@@ -90,6 +95,12 @@ export class PostFX {
 
   setSize(w: number, h: number) {
     this.composer.setSize(w, h);
+    this.shrinkBloom(w, h);
+  }
+
+  /** Re-shrink bloom's working resolution after the composer resets it to full size. */
+  private shrinkBloom(w: number, h: number) {
+    this.bloom.setSize(w / 2, h / 2);
   }
 
   render() {
