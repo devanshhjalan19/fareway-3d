@@ -54,14 +54,17 @@ const GradeShader = {
  * game's look and needs no external assets.
  */
 export class PostFX {
-  private composer: EffectComposer;
-  readonly bloom: UnrealBloomPass;
+  private composer: EffectComposer | null = null;
+  readonly bloom: UnrealBloomPass | null = null;
 
   constructor(
-    renderer: THREE.WebGLRenderer,
-    scene: THREE.Scene,
-    camera: THREE.Camera,
+    private readonly renderer: THREE.WebGLRenderer,
+    private readonly scene: THREE.Scene,
+    private readonly camera: THREE.Camera,
+    enabled = true,
   ) {
+    if (!enabled) return;
+
     const size = renderer.getSize(new THREE.Vector2());
     this.composer = new EffectComposer(renderer);
     this.composer.addPass(new RenderPass(scene, camera));
@@ -69,13 +72,14 @@ export class PostFX {
     // Bloom runs in HDR/linear space before tone mapping. A high threshold means
     // only genuinely bright things (emissive lights, the sun) bloom, not the
     // whole sunlit city.
-    this.bloom = new UnrealBloomPass(
+    const bloom = new UnrealBloomPass(
       new THREE.Vector2(size.x, size.y),
       0.65, // strength
       0.5, // radius
       0.85, // luminance threshold
     );
-    this.composer.addPass(this.bloom);
+    this.bloom = bloom;
+    this.composer.addPass(bloom);
     // Bloom is a soft blur, so it doesn't need to be computed at full
     // resolution — halving its internal working size again (on top of the
     // half-res "bright" pass Three.js already does) is a big perf win for a
@@ -94,16 +98,18 @@ export class PostFX {
   }
 
   setSize(w: number, h: number) {
+    if (!this.composer) return;
     this.composer.setSize(w, h);
     this.shrinkBloom(w, h);
   }
 
   /** Re-shrink bloom's working resolution after the composer resets it to full size. */
   private shrinkBloom(w: number, h: number) {
-    this.bloom.setSize(w / 2, h / 2);
+    this.bloom?.setSize(w / 2, h / 2);
   }
 
   render() {
-    this.composer.render();
+    if (this.composer) this.composer.render();
+    else this.renderer.render(this.scene, this.camera);
   }
 }

@@ -49,14 +49,18 @@ export class TouchControls {
     extra = "",
   ): HTMLButtonElement {
     const b = document.createElement("button");
+    b.type = "button";
     b.className = `touch-btn ${extra}`.trim();
     b.textContent = label;
-    const down = (e: Event) => {
+    b.setAttribute("aria-label", label);
+    const down = (e: PointerEvent) => {
       e.preventDefault();
+      b.setPointerCapture?.(e.pointerId);
       onDown();
     };
-    const up = (e: Event) => {
+    const up = (e: PointerEvent) => {
       e.preventDefault();
+      if (b.hasPointerCapture?.(e.pointerId)) b.releasePointerCapture(e.pointerId);
       onUp();
     };
     b.addEventListener("pointerdown", down);

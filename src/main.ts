@@ -35,6 +35,10 @@ const container = document.getElementById("app")!;
 const sceneManager = new SceneManager(container);
 const { scene, camera } = sceneManager;
 const profile = new Profile();
+const lowPowerDevice =
+  navigator.maxTouchPoints > 0 ||
+  window.matchMedia?.("(pointer: coarse)").matches ||
+  window.innerWidth <= 700;
 
 // --- World -----------------------------------------------------------------
 const city = new City();
@@ -45,10 +49,10 @@ scene.add(surfaces.group);
 
 // Cows wander the streets and collide dynamically (see cows.update / cows.collide).
 // Counts trimmed slightly from the original 8/16 for performance headroom.
-const cows = new Cows(city.roadLines, city.span, 6);
+const cows = new Cows(city.roadLines, city.span, lowPowerDevice ? 3 : 6);
 scene.add(cows.group);
 
-const traffic = new Traffic(city.roadLines, city.span, 12);
+const traffic = new Traffic(city.roadLines, city.span, lowPowerDevice ? 7 : 12);
 scene.add(traffic.group);
 
 const clouds = new Clouds(city.span);
