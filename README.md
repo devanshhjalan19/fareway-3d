@@ -1,7 +1,7 @@
-# 🛺 Rickshaw Racing
+# 🛺 Fareway
 
-A 3D arcade driving game built with **Three.js + TypeScript + Vite**. You're an
-auto-rickshaw driver in Mumbai: pick up waiting passengers, drop them at their
+A 3D arcade driving game built with **Three.js + TypeScript + Vite**. You're a
+driver in Mumbai: pick up waiting passengers, drop them at their
 destination, and complete as many rides as you can before the timer runs out.
 
 Play **solo** (score attack) or in a **4-player room** where everyone competes
